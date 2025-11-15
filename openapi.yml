@@ -8,7 +8,7 @@ tags:
   - name: Users
   - name: PullRequests
   - name: Health
-  - name: Stats # <--- НОВЫЙ ТЕГ
+  - name: Stats
 
 components:
   parameters:
@@ -449,6 +449,47 @@ paths:
                   summary: Нет доступных кандидатов
                   value:
                     error: { code: NO_CANDIDATE, message: no active replacement candidate in team }
+  /users/bulkDeactivate: # <--- НОВАЯ РУЧКА
+    post:
+      tags: [ Users ]
+      summary: Массовая деактивация пользователей по ID и переназначение их PR
+      security:
+        - AdminToken: [ ] # Только админ может деактивировать массово
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ user_ids ]
+              properties:
+                user_ids:
+                  type: array
+                  items:
+                    type: string
+                  description: Список идентификаторов пользователей для деактивации
+            example:
+              user_ids: [ "u1", "u3", "u5" ]
+      responses:
+        '200':
+          description: Деактивация и переназначение выполнены
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ deactivated_count, reassigned_prs_count, duration_ms ]
+                properties:
+                  deactivated_count:
+                    type: integer
+                    format: int32
+                    description: Количество фактически деактивированных пользователей
+                  reassigned_prs_count:
+                    type: integer
+                    format: int32
+                    description: Количество PR, в которых были переназначены ревьюверы
+              example:
+                deactivated_count: 2
+                reassigned_prs_count: 1
 
   /users/getReview:
     get:
@@ -482,12 +523,12 @@ paths:
                     author_id: u1
                     status: OPEN
 
-  /stats: # <--- НОВЫЙ ЭНДПОИНТ ДЛЯ СТАТИСТИКИ
+  /stats:
     get:
       tags: [Stats]
       summary: Получить статистику по пользователям и PR
       security:
-        - AdminToken: [] # Добавил AdminToken, если статистика только для админов
+        - AdminToken: []
       responses:
         '200':
           description: Общий объект статистики
@@ -511,8 +552,3 @@ paths:
                   total_prs: 15
                   open_prs: 5
                   merged_prs: 10
-        '401':
-          description: Нет/неверный админский токен
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/ErrorResponse' }

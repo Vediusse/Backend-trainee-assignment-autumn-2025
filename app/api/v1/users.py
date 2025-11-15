@@ -9,6 +9,8 @@ from app.schemas.user import (
     SetIsActiveRequest,
     UserResponse,
     GetReviewsResponse,
+    BulkDeactivateResponse,
+    UserDeactivationRequest,
 )
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -30,3 +32,14 @@ async def get_reviews(
 ):
     """Получить PR'ы, где пользователь назначен ревьювером."""
     return await UserService(session).get_reviews(user_id)
+
+
+@router.post("/bulkDeactivate", response_model=BulkDeactivateResponse)
+async def bulk_deactivate(
+    request: UserDeactivationRequest,
+    session: AsyncSession = Depends(get_session),
+):
+    """Массово деактивировать пользователей команды и переназначить открытые PR."""
+    return BulkDeactivateResponse(
+        **(await UserService(session).bulk_deactivate_users(request.user_ids))
+    )

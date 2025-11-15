@@ -61,17 +61,6 @@ class UserRepository(BaseRepository[User]):
         result = await self.session.execute(query)
         return list(result.scalars().all())
 
-    async def bulk_deactivate_by_team(self, team_name: str) -> int:
-        """Массово деактивировать пользователей команды."""
-        result = await self.session.execute(
-            update(User)
-            .where(User.team_name == team_name, User.is_active == True)  # noqa: E712
-            .values(is_active=False)
-            .execution_options(synchronize_session="fetch")
-        )
-        await self.session.flush()
-        return result.rowcount or 0
-
     async def get_all_with_stats(self) -> List[dict]:
         """Получить всех пользователей со статистикой ревью."""
 
@@ -108,3 +97,62 @@ class UserRepository(BaseRepository[User]):
             }
             for row in result.all()
         ]
+
+    async def bulk_deactivate_by_ids(self, user_ids: List[str]) -> int:
+        """Массово деактивировать пользователей по списку ID."""
+        if not user_ids:
+            return 0
+
+        result = await self.session.execute(
+            update(User)
+            .where(User.user_id.in_(user_ids), User.is_active == True)  # noqa E712
+            .values(is_active=False)
+            .execution_options(synchronize_session="fetch")
+        )
+        await self.session.flush()
+        return result.rowcount or 0
+
+    async def get_users_by_ids(self, user_ids: List[str]) -> List[User]:
+        """Получить пользователей по списку ID."""
+        if not user_ids:
+            return []
+        result = await self.session.execute(select(User).where(User.user_id.in_(user_ids)))
+        return list(result.scalars().all())
+
+    async def get_active_candidates_for_pr(
+        self, excluded_user_ids: List[str], current_pr_reviewers_ids: List[str], limit: int = 100
+    ) -> List[User]:
+        """
+        Получить активных кандидатов для ревью PR, исключая заданных пользователей
+        и текущих ревьюверов. Ищет среди ВСЕХ активных пользователей.
+        """
+
+        query = select(User).where(
+            User.is_active == True,  # noqa E712
+            User.user_id.notin_(excluded_user_ids),
+            User.user_id.notin_(current_pr_reviewers_ids),
+        )
+
+        query = query.order_by(func.random())
+        query = query.limit(limit)
+        result = await self.session.execute(query)
+        return list(result.scalars().all())
+
+    async def get_prs_by_reviewer_ids(self, reviewer_ids: List[str]) -> List[PullRequest]:
+        """
+        Получить все открытые PR, где указанные ID являются ревьюверами,
+        и нетерпеливо загрузить их ревьюверов.
+        """
+        if not reviewer_ids:
+            return []
+
+        query = (
+            select(PullRequest)
+            .options(selectinload(PullRequest.reviewers))
+            .join(PullRequest.reviewers)
+            .where(User.user_id.in_(reviewer_ids), PullRequest.status != "MERGED")
+            .distinct()
+        )
+
+        result = await self.session.execute(query)
+        return list(result.scalars().unique().all())

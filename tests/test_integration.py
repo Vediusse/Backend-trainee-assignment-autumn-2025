@@ -2,6 +2,8 @@
 
 import pytest
 from httpx import AsyncClient, ASGITransport
+
+from app.api.dependencies import get_session
 from app.main import app
 
 
@@ -139,3 +141,91 @@ async def test_e2e_stats(session, mock_cache):
         assert "u7" in user_stats or "u8" in user_stats
 
     app.dependency_overrides.clear()
+
+
+@pytest.mark.asyncio
+async def test_e2e_simple_bulk_deactivate(session):
+    """
+    E2E тест деактивации по одному пользователю из двух разных команд
+    и проверка returned counts.
+    """
+
+    async def override_get_session():
+        yield session
+
+    app.dependency_overrides[get_session] = override_get_session
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        await client.post(
+            "/team/add",
+            json={
+                "team_name": "team-fe",
+                "members": [
+                    {"user_id": "fe1", "username": "FE Dev 1", "is_active": True},
+                    {"user_id": "fe2", "username": "FE Dev 2", "is_active": True},
+                    {"user_id": "fe3", "username": "FE Dev 3", "is_active": True},
+                    {"user_id": "fe4", "username": "FE Dev 4", "is_active": True},
+                ],
+            },
+        )
+
+        await client.post(
+            "/team/add",
+            json={
+                "team_name": "team-be",
+                "members": [
+                    {"user_id": "be1", "username": "BE Dev 1", "is_active": True},
+                    {"user_id": "be2", "username": "BE Dev 2", "is_active": True},
+                    {"user_id": "be3", "username": "BE Dev 3", "is_active": True},
+                    {"user_id": "be4", "username": "BE Dev 4", "is_active": True},
+                ],
+            },
+        )
+
+        create_pr1_res = await client.post(
+            "/pullRequest/create",
+            json={
+                "pull_request_id": "pr-fe-001",
+                "pull_request_name": "FE Task 1",
+                "author_id": "fe1",
+            },
+        )
+        assert create_pr1_res.status_code == 201
+
+        create_pr2_res = await client.post(
+            "/pullRequest/create",
+            json={
+                "pull_request_id": "pr-be-001",
+                "pull_request_name": "BE Task 1",
+                "author_id": "be1",
+            },
+        )
+        assert create_pr2_res.status_code == 201
+
+        users_to_deactivate_ids = ["fe2", "be2"]
+
+        deactivate_response = await client.post(
+            "/users/bulkDeactivate", json={"user_ids": users_to_deactivate_ids}
+        )
+        assert deactivate_response.status_code == 200
+        deactivate_data = deactivate_response.json()
+
+        assert deactivate_data["deactivated_count"] == 2
+
+        assert deactivate_data["reassigned_prs_count"] == 2
+
+        team_fe_after = (await client.get("/team/get", params={"team_name": "team-fe"})).json()[
+            "team"
+        ]
+        assert (
+            next(m for m in team_fe_after["members"] if m["user_id"] == "fe2")["is_active"] is False
+        )
+
+        team_be_after = (await client.get("/team/get", params={"team_name": "team-be"})).json()[
+            "team"
+        ]
+        assert (
+            next(m for m in team_be_after["members"] if m["user_id"] == "be2")["is_active"] is False
+        )
+
+        app.dependency_overrides.clear()
