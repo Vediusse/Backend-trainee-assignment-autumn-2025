@@ -130,7 +130,6 @@ class UserService(BaseService):
             )
             return 1
 
-
         try:
             pr.reviewers.remove(old_reviewer)
         except ValueError:
