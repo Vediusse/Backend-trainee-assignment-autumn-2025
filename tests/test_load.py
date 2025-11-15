@@ -119,15 +119,15 @@ class RequestStats:
     def __init__(self, label: str):
         self.label = label
         self.count = 0
-        self.server_errors = 0  # Новый счетчик только для 5xx ошибок
+        self.server_errors = 0
         self.response_times: List[float] = []
-        self.error_details: Dict[str, int] = {}  # Теперь хранит все ошибки для отладки
+        self.error_details: Dict[str, int] = {}
 
     def record_success(self, duration_ms: float):
         self.count += 1
         self.response_times.append(duration_ms)
 
-    # Обновлен метод record_error
+
     def record_error(self, error_type: str = "Unknown", http_status_code: int | None = None):
         self.count += 1
         self.error_details[error_type] = self.error_details.get(error_type, 0) + 1
@@ -142,11 +142,11 @@ class RequestStats:
 
         print(f"\nРезультаты {self.label}:")
         print(f"  Всего запросов: {self.count}")
-        # Теперь выводим только ошибки сервера как "Ошибки"
+
         print(f"  Ошибок (5xx): {self.server_errors}")
 
         if self.count > 0:
-            # Расчет успешности теперь основан на server_errors
+
             success_rate = (self.count - self.server_errors) / self.count * 100
             rps = self.count / test_duration
             print(f"  Успешность (без 5xx): {success_rate:.2f}%")
@@ -371,14 +371,14 @@ async def _execute_write_request(
                 )
             new_user_id = random.choice(available_users_for_new_reviewer)
 
-            # ИЗМЕНЕНО: теперь reassign_reviewer_api вызывается без new_user_id
+
             await reassign_reviewer_api(
                 client, pr_id, old_user_id, new_user_id
-            )  # Оставил new_user_id здесь, если серверный эндпоинт ждет его
-            # Если ваш серверный метод reassign_reviewer не ждет new_user_id,
-            # измените вызов на: await reassign_reviewer_api(client, pr_id, old_user_id)
+            )
 
-        elif write_operation == 2:  # Смена активности пользователя
+
+
+        elif write_operation == 2:
             user_id = await shared_data.get_random_user()
             if user_id:
                 status = random.choice([True, False])
@@ -386,7 +386,7 @@ async def _execute_write_request(
             else:
                 raise ValueError("No users available for setting active status")
 
-        elif write_operation == 3:  # Создание нового PR
+        elif write_operation == 3:
             author_id = await shared_data.get_random_user()
             if author_id:
                 reviewer_ids_for_pr = []
@@ -417,7 +417,7 @@ async def _execute_write_request(
             pass
 
         error_code = error_info.get("code", f"HTTP_ERROR_{e.response.status_code}")
-        # Передаем HTTP статус код в record_error
+
         stats.record_error(error_code, e.response.status_code)
     except ValueError as e:
         stats.record_error(f"CLIENT_ERROR_{e}")
