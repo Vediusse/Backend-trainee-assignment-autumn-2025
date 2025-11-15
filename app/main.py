@@ -50,18 +50,15 @@ def custom_openapi():
 
 app.openapi = custom_openapi
 
-# Регистрируем обработчики исключений
 app.add_exception_handler(ServiceException, service_exception_handler)
 app.add_exception_handler(StarletteHTTPException, http_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
-# Регистрируем роутеры
 app.include_router(health.router)
 app.include_router(teams.router)
 app.include_router(users.router)
 app.include_router(pull_requests.router)
 app.include_router(stats.router)
-
 
 if __name__ == "__main__":
     import uvicorn
