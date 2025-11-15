@@ -127,7 +127,6 @@ class RequestStats:
         self.count += 1
         self.response_times.append(duration_ms)
 
-
     def record_error(self, error_type: str = "Unknown", http_status_code: int | None = None):
         self.count += 1
         self.error_details[error_type] = self.error_details.get(error_type, 0) + 1
@@ -371,12 +370,7 @@ async def _execute_write_request(
                 )
             new_user_id = random.choice(available_users_for_new_reviewer)
 
-
-            await reassign_reviewer_api(
-                client, pr_id, old_user_id, new_user_id
-            )
-
-
+            await reassign_reviewer_api(client, pr_id, old_user_id, new_user_id)
 
         elif write_operation == 2:
             user_id = await shared_data.get_random_user()
@@ -402,7 +396,6 @@ async def _execute_write_request(
                             potential_reviewers, num_reviewers_to_assign
                         )
 
-                # ИЗМЕНЕНО: теперь create_pr принимает reviewer_ids
                 new_pr_id = await create_pr(client, author_id, reviewer_ids_for_pr)
                 await shared_data.add_pr_open(new_pr_id)
             else:
