@@ -32,6 +32,8 @@ class UserRepository(BaseRepository[User]):
         )
         if exclude_user_id:
             query = query.where(User.user_id != exclude_user_id)
+
+        query = query.order_by(func.random())
         query = query.limit(limit)
         result = await self.session.execute(query)
         return list(result.scalars().all())
