@@ -79,6 +79,22 @@ class PRRepository(BaseRepository[PullRequest]):
 
         return pr
 
+    async def remove_reviewer(self, pr_id: str, reviewer_id: str) -> PullRequest | None:
+        """
+        Удалить ревьювера из PR.
+        Возвращает обновлённый PR или None, если PR не найден.
+        """
+        pr = await self.get_by_id(pr_id, load_reviewers=True)
+        if not pr:
+            return None
+
+        reviewer = next((r for r in pr.reviewers if r.user_id == reviewer_id), None)
+        if reviewer:
+            pr.reviewers.remove(reviewer)
+            await self.session.flush()
+
+        return pr
+
     async def reassign_reviewer(
         self, pr_id: str, old_reviewer_id: str, new_reviewer_id: str
     ) -> PullRequest | None:

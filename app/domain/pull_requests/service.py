@@ -1,11 +1,11 @@
 """Сервис для работы с Pull Request'ами."""
 
+import logging
 import random
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import (
-    NoCandidateException,
     NotAssignedException,
     NotFoundException,
     PRExistsException,
@@ -14,6 +14,8 @@ from app.core.exceptions import (
 from app.db.repositories.pr_repository import PRRepository
 from app.db.repositories.team_repository import TeamRepository
 from app.db.repositories.user_repository import UserRepository
+
+logger = logging.getLogger(__name__)
 
 
 class PullRequestService:
@@ -79,6 +81,7 @@ class PullRequestService:
             raise PRMergedException()
 
         old_reviewer_ids = [r.user_id for r in pr.reviewers]
+
         if old_user_id not in old_reviewer_ids:
             raise NotAssignedException()
 
@@ -88,22 +91,30 @@ class PullRequestService:
 
         team_name = old_reviewer.team_name
 
-        candidates = await self.user_repo.get_active_by_team(
+        initial_candidates = await self.user_repo.get_active_by_team(
             team_name, exclude_user_id=old_user_id, limit=100
         )
 
-        candidates = [u for u in candidates if u.user_id not in old_reviewer_ids]
+        candidates = [
+            u
+            for u in initial_candidates
+            if u.user_id not in old_reviewer_ids and u.user_id != pr.author_id
+        ]
 
-        if not candidates:
-            raise NoCandidateException()
+        if candidates:
+            new_reviewer = random.choice(candidates)
 
-        new_reviewer = random.choice(candidates)
+            pr = await self.pr_repo.reassign_reviewer(pr_id, old_user_id, new_reviewer.user_id)
+            replaced_by = new_reviewer.user_id
+        else:
 
-        pr = await self.pr_repo.reassign_reviewer(pr_id, old_user_id, new_reviewer.user_id)
+            pr = await self.pr_repo.remove_reviewer(pr_id, old_user_id)
+            replaced_by = ""
+
         if not pr:
             raise NotFoundException("PR")
 
-        return {"pr": self._pr_to_schema(pr), "replaced_by": new_reviewer.user_id}
+        return {"pr": self._pr_to_schema(pr), "replaced_by": replaced_by}
 
     def _pr_to_schema(self, pr) -> dict:
         """Преобразовать модель в схему."""
