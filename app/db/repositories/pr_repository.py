@@ -1,9 +1,9 @@
 """Репозиторий для работы с Pull Request'ами."""
 
-from typing import Optional, List
 from datetime import datetime
-from sqlalchemy.ext.asyncio import AsyncSession
+
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.db.models import PullRequest, User, pr_reviewers
@@ -18,7 +18,7 @@ class PRRepository(BaseRepository[PullRequest]):
 
     async def get_by_id(
         self, pr_id: str, load_author: bool = False, load_reviewers: bool = False
-    ) -> Optional[PullRequest]:
+    ) -> PullRequest | None:
         """Получить PR по ID."""
         query = select(PullRequest).where(PullRequest.pull_request_id == pr_id)
         if load_author:
@@ -40,7 +40,7 @@ class PRRepository(BaseRepository[PullRequest]):
         pr_id: str,
         pr_name: str,
         author_id: str,
-        reviewer_ids: List[str],
+        reviewer_ids: list[str],
     ) -> PullRequest:
         """Создать PR с ревьюверами."""
         pr = PullRequest(
@@ -64,7 +64,7 @@ class PRRepository(BaseRepository[PullRequest]):
 
         return pr
 
-    async def merge(self, pr_id: str) -> Optional[PullRequest]:
+    async def merge(self, pr_id: str) -> PullRequest | None:
         """Пометить PR как MERGED (идемпотентная операция)."""
         pr = await self.get_by_id(pr_id, load_author=True, load_reviewers=True)
         if not pr:
@@ -81,7 +81,7 @@ class PRRepository(BaseRepository[PullRequest]):
 
     async def reassign_reviewer(
         self, pr_id: str, old_reviewer_id: str, new_reviewer_id: str
-    ) -> Optional[PullRequest]:
+    ) -> PullRequest | None:
         """Переназначить ревьювера."""
         pr = await self.get_by_id(pr_id, load_reviewers=True)
         if not pr:
@@ -104,7 +104,7 @@ class PRRepository(BaseRepository[PullRequest]):
 
         return pr
 
-    async def get_all_open_prs_with_reviewers(self) -> List[PullRequest]:
+    async def get_all_open_prs_with_reviewers(self) -> list[PullRequest]:
         """Получить все открытые PR с ревьюверами."""
         query = (
             select(PullRequest)
@@ -116,7 +116,7 @@ class PRRepository(BaseRepository[PullRequest]):
 
     async def get_stats(self) -> dict:
         """Получить статистику по PR."""
-        from sqlalchemy import func, case
+        from sqlalchemy import case, func
 
         stats_query = select(
             func.count(PullRequest.pull_request_id).label("total_prs"),

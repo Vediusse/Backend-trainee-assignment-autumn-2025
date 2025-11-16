@@ -1,14 +1,10 @@
 """Репозиторий для работы с пользователями."""
 
-from typing import Optional, List
+from sqlalchemy import case, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 from sqlalchemy.orm import selectinload
-from sqlalchemy import update
 
-from app.db.models import PullRequest, pr_reviewers
-from sqlalchemy import func, case
-from app.db.models import User
+from app.db.models import PullRequest, User, pr_reviewers
 from app.db.repositories.base import BaseRepository
 
 
@@ -18,7 +14,7 @@ class UserRepository(BaseRepository[User]):
     def __init__(self, session: AsyncSession):
         super().__init__(User, session)
 
-    async def get_by_id(self, user_id: str, load_team: bool = False) -> Optional[User]:
+    async def get_by_id(self, user_id: str, load_team: bool = False) -> User | None:
         """Получить пользователя по ID."""
         query = select(User).where(User.user_id == user_id)
         if load_team:
@@ -27,8 +23,8 @@ class UserRepository(BaseRepository[User]):
         return result.scalar_one_or_none()
 
     async def get_active_by_team(
-        self, team_name: str, exclude_user_id: Optional[str] = None, limit: int = 2
-    ) -> List[User]:
+        self, team_name: str, exclude_user_id: str | None = None, limit: int = 2
+    ) -> list[User]:
         """Получить активных пользователей команды, исключая указанного."""
         query = select(User).where(
             User.team_name == team_name,
@@ -40,7 +36,7 @@ class UserRepository(BaseRepository[User]):
         result = await self.session.execute(query)
         return list(result.scalars().all())
 
-    async def update_active(self, user_id: str, is_active: bool) -> Optional[User]:
+    async def update_active(self, user_id: str, is_active: bool) -> User | None:
         """Обновить флаг активности."""
         user = await self.get_by_id(user_id)
         if user:
@@ -48,7 +44,7 @@ class UserRepository(BaseRepository[User]):
             await self.session.flush()
         return user
 
-    async def get_review_prs(self, user_id: str) -> List:
+    async def get_review_prs(self, user_id: str) -> list:
         """Получить PR'ы, где пользователь ревьювер."""
         from app.db.models import PullRequest, pr_reviewers
 
@@ -61,7 +57,7 @@ class UserRepository(BaseRepository[User]):
         result = await self.session.execute(query)
         return list(result.scalars().all())
 
-    async def get_all_with_stats(self) -> List[dict]:
+    async def get_all_with_stats(self) -> list[dict]:
         """Получить всех пользователей со статистикой ревью."""
 
         review_stats = (
@@ -98,7 +94,7 @@ class UserRepository(BaseRepository[User]):
             for row in result.all()
         ]
 
-    async def bulk_deactivate_by_ids(self, user_ids: List[str]) -> int:
+    async def bulk_deactivate_by_ids(self, user_ids: list[str]) -> int:
         """Массово деактивировать пользователей по списку ID."""
         if not user_ids:
             return 0
@@ -112,7 +108,7 @@ class UserRepository(BaseRepository[User]):
         await self.session.flush()
         return result.rowcount or 0
 
-    async def get_users_by_ids(self, user_ids: List[str]) -> List[User]:
+    async def get_users_by_ids(self, user_ids: list[str]) -> list[User]:
         """Получить пользователей по списку ID."""
         if not user_ids:
             return []
@@ -120,8 +116,8 @@ class UserRepository(BaseRepository[User]):
         return list(result.scalars().all())
 
     async def get_active_candidates_for_pr(
-        self, excluded_user_ids: List[str], current_pr_reviewers_ids: List[str], limit: int = 100
-    ) -> List[User]:
+        self, excluded_user_ids: list[str], current_pr_reviewers_ids: list[str], limit: int = 100
+    ) -> list[User]:
         """
         Получить активных кандидатов для ревью PR, исключая заданных пользователей
         и текущих ревьюверов. Ищет среди ВСЕХ активных пользователей.
@@ -138,7 +134,7 @@ class UserRepository(BaseRepository[User]):
         result = await self.session.execute(query)
         return list(result.scalars().all())
 
-    async def get_prs_by_reviewer_ids(self, reviewer_ids: List[str]) -> List[PullRequest]:
+    async def get_prs_by_reviewer_ids(self, reviewer_ids: list[str]) -> list[PullRequest]:
         """
         Получить все открытые PR, где указанные ID являются ревьюверами,
         и нетерпеливо загрузить их ревьюверов.

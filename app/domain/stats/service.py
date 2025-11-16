@@ -2,8 +2,8 @@
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.repositories.user_repository import UserRepository
 from app.db.repositories.pr_repository import PRRepository
+from app.db.repositories.user_repository import UserRepository
 from app.domain.base_service import BaseService
 
 

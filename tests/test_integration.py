@@ -1,7 +1,7 @@
 """Интеграционные тесты E2E."""
 
 import pytest
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 
 from app.api.dependencies import get_session
 from app.main import app

@@ -1,7 +1,6 @@
 """Сервис для работы с пользователями."""
 
 import random
-from typing import List
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -68,7 +67,7 @@ class UserService(BaseService):
         await cache_service.set(cache_key, result, ttl=300)
         return result
 
-    async def bulk_deactivate_users(self, user_ids: List[str]) -> dict:
+    async def bulk_deactivate_users(self, user_ids: list[str]) -> dict:
 
         if not user_ids:
             return {"deactivated_count": 0, "reassigned_prs_count": 0}
@@ -80,12 +79,10 @@ class UserService(BaseService):
 
         await cache.delete_pattern("users:get_reviews:*")
 
-        # кеши по юзерам
         for uid in user_ids:
             await cache.delete(f"user:{uid}")
             await cache.delete(f"users:get_reviews:{uid}")
 
-        # кеши по командам
         teams = {u.team_name for u in users_before if u.team_name}
         for team in teams:
             await cache.delete_pattern(f"teams:get_team:{team}:*")
@@ -97,7 +94,7 @@ class UserService(BaseService):
             "reassigned_prs_count": reassigned_count,
         }
 
-    async def _reassign_pull_requests(self, user_ids: List[str]) -> int:
+    async def _reassign_pull_requests(self, user_ids: list[str]) -> int:
         prs = await self.user_repo.get_prs_by_reviewer_ids(user_ids)
         reassigned_count = 0
 

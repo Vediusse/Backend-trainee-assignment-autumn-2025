@@ -1,18 +1,19 @@
 """Сервис для работы с Pull Request'ами."""
 
 import random
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import (
+    NoCandidateException,
+    NotAssignedException,
     NotFoundException,
     PRExistsException,
     PRMergedException,
-    NotAssignedException,
-    NoCandidateException,
 )
 from app.db.repositories.pr_repository import PRRepository
-from app.db.repositories.user_repository import UserRepository
 from app.db.repositories.team_repository import TeamRepository
+from app.db.repositories.user_repository import UserRepository
 
 
 class PullRequestService:

@@ -8,8 +8,8 @@ from app.domain.pull_requests.service import PullRequestService
 from app.schemas.pr import (
     CreatePRRequest,
     MergePRRequest,
-    ReassignRequest,
     PullRequestResponse,
+    ReassignRequest,
     ReassignResponse,
 )
 

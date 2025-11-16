@@ -1,8 +1,8 @@
 """Схемы для Pull Request'ов."""
 
 from datetime import datetime
-from typing import Optional
-from pydantic import BaseModel, Field, ConfigDict
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class PullRequestSchema(BaseModel):
@@ -13,8 +13,8 @@ class PullRequestSchema(BaseModel):
     author_id: str
     status: str
     assigned_reviewers: list[str] = Field(default_factory=list, max_length=2)
-    createdAt: Optional[datetime] = None
-    mergedAt: Optional[datetime] = None
+    createdAt: datetime | None = None
+    mergedAt: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

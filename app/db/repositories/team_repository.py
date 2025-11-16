@@ -1,8 +1,7 @@
 """Репозиторий для работы с командами."""
 
-from typing import Optional
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.db.models import Team
@@ -15,7 +14,7 @@ class TeamRepository(BaseRepository[Team]):
     def __init__(self, session: AsyncSession):
         super().__init__(Team, session)
 
-    async def get_by_name(self, team_name: str, load_members: bool = True) -> Optional[Team]:
+    async def get_by_name(self, team_name: str, load_members: bool = True) -> Team | None:
         """Получить команду по имени."""
         query = select(Team).where(Team.team_name == team_name)
         if load_members:

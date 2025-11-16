@@ -1,14 +1,13 @@
 """Настройка кеширования Redis."""
 
 import json
-from typing import Optional
 
 import redis.asyncio as redis
 from redis.asyncio import Redis
 
 from app.core.config import settings
 
-redis_client: Optional[Redis] = None
+redis_client: Redis | None = None
 
 
 async def init_cache():
@@ -52,7 +51,7 @@ async def close_cache():
             redis_client = None
 
 
-async def get_cache() -> Optional[Redis]:
+async def get_cache() -> Redis | None:
     """
     Получить клиент Redis.
     Если клиент еще не инициализирован, попытается его инициализировать.
@@ -70,7 +69,7 @@ class CacheService:
     если Redis недоступен, без возникновения ошибок.
     """
 
-    def __init__(self, redis_client_instance: Optional[Redis], ttl: int = settings.REDIS_TTL):
+    def __init__(self, redis_client_instance: Redis | None, ttl: int = settings.REDIS_TTL):
         self.redis = redis_client_instance
         self.ttl = ttl
 
@@ -81,7 +80,7 @@ class CacheService:
         """Возвращает текущий статус доступности кеша."""
         return self._is_available
 
-    async def get(self, key: str) -> Optional[dict]:
+    async def get(self, key: str) -> dict | None:
         """
         Получить значение из кеша.
         В случае ошибки Redis или его недоступности, возвращает None.
@@ -100,7 +99,7 @@ class CacheService:
             self._is_available = False
         return None
 
-    async def set(self, key: str, value: dict, ttl: Optional[int] = None):
+    async def set(self, key: str, value: dict, ttl: int | None = None):
         """
         Установить значение в кеш.
         В случае ошибки Redis или его недоступности, пропускает запись.

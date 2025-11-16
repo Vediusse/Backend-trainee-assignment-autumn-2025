@@ -33,5 +33,5 @@ async def test_get_reviews(session, mock_cache, sample_team):
     user_service = UserService(session)
     result = await user_service.get_reviews("u2")
     assert "pull_requests" in result
-    # u2 может быть назначен ревьювером
+
     assert isinstance(result["pull_requests"], list)

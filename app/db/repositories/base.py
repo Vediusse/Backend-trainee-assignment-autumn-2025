@@ -1,8 +1,9 @@
 """Базовый репозиторий."""
 
-from typing import Generic, TypeVar, Optional, List
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Generic, TypeVar
+
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import Base
 
@@ -16,11 +17,11 @@ class BaseRepository(Generic[ModelType]):
         self.model = model
         self.session = session
 
-    async def get_by_id(self, id: str) -> Optional[ModelType]:
+    async def get_by_id(self, id: str) -> ModelType | None:
         """Получить по ID (переопределяется в дочерних классах)."""
         raise NotImplementedError("Subclasses must implement get_by_id")
 
-    async def get_all(self, limit: Optional[int] = None, offset: int = 0) -> List[ModelType]:
+    async def get_all(self, limit: int | None = None, offset: int = 0) -> list[ModelType]:
         """Получить все записи."""
         query = select(self.model).offset(offset)
         if limit:

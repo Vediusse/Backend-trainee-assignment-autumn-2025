@@ -6,11 +6,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.dependencies import get_session
 from app.domain.users.service import UserService
 from app.schemas.user import (
-    SetIsActiveRequest,
-    UserResponse,
-    GetReviewsResponse,
     BulkDeactivateResponse,
+    GetReviewsResponse,
+    SetIsActiveRequest,
     UserDeactivationRequest,
+    UserResponse,
 )
 
 router = APIRouter(prefix="/users", tags=["Users"])

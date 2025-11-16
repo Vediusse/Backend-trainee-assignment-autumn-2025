@@ -41,10 +41,38 @@ build-backend = "poetry.core.masonry.api"
 [tool.black]
 line-length = 100
 target-version = ['py311']
+skip-string-normalization = false
 
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+
+
+lint.select = [
+    "E",    # pycodestyle
+    "F",    # pyflakes — ошибки: неопределённые переменные, дубли и т.п.
+    "W",    # предупреждения pycodestyle
+    "I",    # isort — сортировка импортов
+    "B",    # flake8-bugbear — ловит скрытые баги
+    "C4",   # flake8-comprehensions — упрощение comprehensions
+    "UP",   # pyupgrade — обновление синтаксиса под новую версию Python
+]
+
+
+lint.ignore = [
+    "E501",
+    "B008",
+]
+
+
+exclude = [
+    "venv",
+    "migrations",
+    "alembic",
+    "__pycache__",
+]
+
+fix = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

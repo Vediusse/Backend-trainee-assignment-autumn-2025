@@ -1,8 +1,7 @@
 """Схемы для пользователей."""
 
-from typing import List
-
 from pydantic import BaseModel, ConfigDict
+
 from app.schemas.pr import PullRequestShortSchema
 
 
@@ -55,7 +54,7 @@ class GetReviewsResponse(BaseModel):
 class UserDeactivationRequest(BaseModel):  # Переименовал для ясности
     """Схема для деактивации пользователей по списку ID."""
 
-    user_ids: List[str]
+    user_ids: list[str]
 
 
 UserResponse.model_rebuild()

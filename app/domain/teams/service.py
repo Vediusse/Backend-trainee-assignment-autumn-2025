@@ -1,6 +1,7 @@
 """Сервис для работы с командами."""
 
 import json
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import NotFoundException, TeamExistsException

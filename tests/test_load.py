@@ -1,12 +1,12 @@
 import asyncio
-import time
 import json
-from typing import List, Tuple, Dict, Set
-import httpx
-from faker import Faker
-import uuid
 import random
 import statistics
+import time
+import uuid
+
+import httpx
+from faker import Faker
 
 fake = Faker()
 BASE_URL = "http://localhost:8080"
@@ -17,7 +17,7 @@ def random_id(prefix: str) -> str:
     return f"{prefix}_{uuid.uuid4().hex[:8]}"
 
 
-async def create_team(client: httpx.AsyncClient, num_users: int = 10) -> Tuple[str, List[str]]:
+async def create_team(client: httpx.AsyncClient, num_users: int = 10) -> tuple[str, list[str]]:
     """Создать команду с уникальными пользователями."""
     team_name = random_id("team")
     members = [
@@ -102,7 +102,7 @@ async def get_team_api(client: httpx.AsyncClient, team_name: str):
     return response.json()
 
 
-async def get_pr_details_api(client: httpx.AsyncClient, pr_id: str) -> Dict | None:
+async def get_pr_details_api(client: httpx.AsyncClient, pr_id: str) -> dict | None:
     """Получить детали PR, включая ревьюверов и статус.
     Предполагается эндпоинт GET /pullRequest?pr_id={pr_id}."""
     try:
@@ -120,8 +120,8 @@ class RequestStats:
         self.label = label
         self.count = 0
         self.server_errors = 0
-        self.response_times: List[float] = []
-        self.error_details: Dict[str, int] = {}
+        self.response_times: list[float] = []
+        self.error_details: dict[str, int] = {}
 
     def record_success(self, duration_ms: float):
         self.count += 1
@@ -173,12 +173,12 @@ class SharedData:
     """Класс для хранения общих изменяемых данных и их синхронизации."""
 
     def __init__(self):
-        self.teams_data: Dict[str, List[str]] = {}
-        self.user_to_team_map: Dict[str, str] = {}
-        self.all_user_ids: List[str] = []
+        self.teams_data: dict[str, list[str]] = {}
+        self.user_to_team_map: dict[str, str] = {}
+        self.all_user_ids: list[str] = []
 
-        self.all_pr_ids_open: Set[str] = set()
-        self.all_pr_ids_merged: Set[str] = set()
+        self.all_pr_ids_open: set[str] = set()
+        self.all_pr_ids_merged: set[str] = set()
 
         self._lock_open_prs = asyncio.Lock()
         self._lock_merged_prs = asyncio.Lock()
@@ -208,12 +208,12 @@ class SharedData:
                 return None
             return random.choice(self.all_user_ids)
 
-    async def get_all_user_ids_snapshot(self) -> List[str]:
+    async def get_all_user_ids_snapshot(self) -> list[str]:
         """Возвращает безопасную копию списка всех ID пользователей."""
         async with self._lock_users:
             return list(self.all_user_ids)
 
-    async def get_users_in_team(self, team_name: str) -> List[str]:
+    async def get_users_in_team(self, team_name: str) -> list[str]:
         """Возвращает список user_ids для данной команды."""
         async with self._lock_teams:
             return list(self.teams_data.get(team_name, []))
@@ -223,14 +223,14 @@ class SharedData:
         async with self._lock_users:
             return self.user_to_team_map.get(user_id)
 
-    async def get_random_team(self) -> Tuple[str | None, List[str] | None]:
+    async def get_random_team(self) -> tuple[str | None, list[str] | None]:
         async with self._lock_teams:
             if not self.teams_data:
                 return None, None
             team_name = random.choice(list(self.teams_data.keys()))
             return team_name, self.teams_data[team_name]
 
-    async def add_team_data(self, team_name: str, user_ids: List[str]):
+    async def add_team_data(self, team_name: str, user_ids: list[str]):
         async with self._lock_teams:
             self.teams_data[team_name] = user_ids
         async with self._lock_users:

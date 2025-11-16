@@ -2,7 +2,7 @@
 
 import pytest
 
-from app.core.exceptions import TeamExistsException, NotFoundException
+from app.core.exceptions import NotFoundException, TeamExistsException
 from app.domain.teams.service import TeamService
 
 

@@ -1,22 +1,21 @@
 """Главный модуль FastAPI приложения."""
 
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 import yaml
 from fastapi import FastAPI
-from pathlib import Path
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.api.v1 import stats
-from app.api.v1 import health, pull_requests, teams, users
+from app.api.v1 import health, pull_requests, stats, teams, users
 from app.core.database import close_db, init_db
 from app.core.exceptions import (
+    ServiceException,
     http_exception_handler,
     service_exception_handler,
     validation_exception_handler,
-    ServiceException,
 )
-from fastapi.exceptions import RequestValidationError
-from starlette.exceptions import HTTPException as StarletteHTTPException
 
 
 @asynccontextmanager
@@ -41,7 +40,7 @@ def custom_openapi():
         return app.openapi_schema
 
     openapi_path = Path(__file__).parent.parent / "openapi.yml"
-    with open(openapi_path, "r", encoding="utf-8") as f:
+    with open(openapi_path, encoding="utf-8") as f:
         openapi_schema = yaml.load(f, Loader=yaml.BaseLoader)
 
     app.openapi_schema = openapi_schema
@@ -62,6 +61,7 @@ app.include_router(stats.router)
 
 if __name__ == "__main__":
     import uvicorn
+
     from app.core.config import settings
 
     uvicorn.run(app, host=settings.APP_HOST, port=settings.APP_PORT)
