@@ -34,6 +34,8 @@ class TeamService(BaseService):
 
         for member_data in members:
             member = TeamMemberSchema(**member_data)
+            await cache_service.delete(f"users:get_reviews:{member.user_id}")
+
             user = await self.user_repo.get_by_id(member.user_id)
             if user:
                 user.username = member.username

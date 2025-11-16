@@ -14,9 +14,10 @@ from app.core.exceptions import (
 from app.db.repositories.pr_repository import PRRepository
 from app.db.repositories.team_repository import TeamRepository
 from app.db.repositories.user_repository import UserRepository
+from app.domain.base_service import BaseService
 
 
-class PullRequestService:
+class PullRequestService(BaseService):
     """Сервис для работы с Pull Request'ами."""
 
     def __init__(self, session: AsyncSession):
@@ -47,6 +48,10 @@ class PullRequestService:
 
         await self.pr_repo.create_with_reviewers(pr_id, pr_name, author_id, reviewer_ids)
         await self.session.flush()
+
+        cache_service = await self._get_cache_service()
+        for reviewer_id in reviewer_ids:
+            await cache_service.delete(f"users:get_reviews:{reviewer_id}")
 
         pr = await self.pr_repo.get_by_id(pr_id, load_reviewers=True)
 
