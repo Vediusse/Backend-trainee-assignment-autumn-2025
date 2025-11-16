@@ -26,7 +26,12 @@ class UserService(BaseService):
             raise NotFoundException("User")
 
         cache_service = await self._get_cache_service()
+
+        if not is_active:
+            await self._reassign_pull_requests([user_id])
+
         await cache_service.delete_pattern(f"users:get_reviews:{user_id}:*")
+        await cache_service.delete(f"user:{user_id}")
 
         return {
             "user": {
