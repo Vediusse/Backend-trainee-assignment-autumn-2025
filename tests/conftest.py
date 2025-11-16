@@ -79,6 +79,7 @@ async def sample_team(session):
         User(user_id="u1", username="Alice", team_name="backend", is_active=True),
         User(user_id="u2", username="Bob", team_name="backend", is_active=True),
         User(user_id="u3", username="Charlie", team_name="backend", is_active=True),
+        User(user_id="u4", username="Charlie", team_name="backend", is_active=True),
     ]
     for user in users:
         session.add(user)

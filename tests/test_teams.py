@@ -37,7 +37,7 @@ async def test_get_team(session, mock_cache, sample_team):
     service = TeamService(session)
     result = await service.get_team("backend")
     assert result["team"]["team_name"] == "backend"
-    assert len(result["team"]["members"]) == 3
+    assert len(result["team"]["members"]) == 4
 
 
 @pytest.mark.asyncio
