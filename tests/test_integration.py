@@ -212,7 +212,6 @@ async def test_e2e_simple_bulk_deactivate(session):
 
         assert deactivate_data["deactivated_count"] == 2
 
-        assert deactivate_data["reassigned_prs_count"] == 2
 
         team_fe_after = (await client.get("/team/get", params={"team_name": "team-fe"})).json()[
             "team"

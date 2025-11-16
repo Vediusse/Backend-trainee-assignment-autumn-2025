@@ -9,7 +9,6 @@ from app.db.models import Team, User
 from app.db.repositories.team_repository import TeamRepository
 from app.db.repositories.user_repository import UserRepository
 from app.domain.base_service import BaseService
-from app.domain.pull_requests.service import PullRequestService
 from app.schemas.team import TeamMemberSchema
 
 
@@ -20,7 +19,6 @@ class TeamService(BaseService):
         super().__init__(session)
         self.team_repo = TeamRepository(session)
         self.user_repo = UserRepository(session)
-        self.pr_service = PullRequestService(session)
 
     async def create_team(self, team_name: str, members: list[dict]) -> dict:
         """Создать команду с участниками."""
@@ -36,16 +34,8 @@ class TeamService(BaseService):
 
         for member_data in members:
             member = TeamMemberSchema(**member_data)
-
             user = await self.user_repo.get_by_id(member.user_id)
             if user:
-                prs = await self.user_repo.get_review_prs(user.user_id)
-                for pr in prs:
-                    try:
-                        await self.pr_service.reassign_reviewer(pr.pull_request_id, user.user_id)
-                    except Exception:
-                        pass
-                await cache_service.delete(f"users:get_reviews:{member.user_id}")
                 user.username = member.username
                 user.is_active = member.is_active
                 user.team_name = team_name
